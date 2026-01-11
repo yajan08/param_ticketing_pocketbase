@@ -51,8 +51,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     // 1. Initial Load
     _loadInitialData();
-    // 2. Start Active Real-time Listening
-    _initRealtimeSubscriptions();
+    // Wait 1 second before starting real-time subscriptions 
+  // to give the main data request priority
+  Future.delayed(const Duration(seconds: 1), () {
+    if (mounted) _initRealtimeSubscriptions();
+  });
   }
 
   @override
@@ -140,41 +143,53 @@ void _initRealtimeSubscriptions() async {
 
   bool _isFetchingData = false; 
   Future<void> _loadInitialData({bool showLoading = true}) async {
-    if (_isFetchingData) return; 
-    
+  if (_isFetchingData) return; 
+  if (!mounted) return;
+
+  setState(() {
+    if (showLoading) {
+      _isLoading = true;
+    } else {
+      _isBackgroundSyncing = true;
+    }
+  });
+  
+  _isFetchingData = true;
+
+  try {
+    // Add a .timeout() to the entire parallel operation
+    final results = await Future.wait([
+      TicketService.getTickets(),
+      CustomerService.getCustomers(),
+      MachineService.getMachines(),
+    ]).timeout(const Duration(seconds: 10)); // If network is slow, don't wait forever
+
     if (!mounted) return;
 
-    if (showLoading) {
-      setState(() => _isLoading = true);
-    } else {
-      setState(() => _isBackgroundSyncing = true);
-    }
-    
-    _isFetchingData = true;
-
-    try {
-      // Parallel fetch for speed - Ensures all IDs match current names/notes
-      final results = await Future.wait([
-        TicketService.getTickets(),
-        CustomerService.getCustomers(),
-        MachineService.getMachines(),
-      ]);
-
-      if (!mounted) return;
-
-      setState(() {
-        _allTickets = results[0] as List<Ticket>;
-        _customerMap = {for (var item in results[1] as List<Customer>) item.id: item};
-        _machineMap = {for (var item in results[2] as List<Machine>) item.id: item};
-        _isLoading = false;
-        _isBackgroundSyncing = false;
+    setState(() {
+      _allTickets = results[0] as List<Ticket>;
+      _customerMap = {for (var item in results[1] as List<Customer>) item.id: item};
+      _machineMap = {for (var item in results[2] as List<Machine>) item.id: item};
+      _isLoading = false;
+      _isBackgroundSyncing = false;
+    });
+    print("HOME: Data Loaded Successfully");
+  } catch (e) {
+    print("HOME LOAD ERROR: $e");
+    if (mounted) {
+      setState(() { 
+        _isLoading = false; 
+        _isBackgroundSyncing = false; 
       });
-    } catch (e) {
-      if (mounted) setState(() { _isLoading = false; _isBackgroundSyncing = false; });
-    } finally {
-      _isFetchingData = false; 
+      // Show the user what went wrong
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Connection Error: Check your internet")),
+      );
     }
+  } finally {
+    _isFetchingData = false; 
   }
+}
 
   // --- UI COMPONENTS ---
 

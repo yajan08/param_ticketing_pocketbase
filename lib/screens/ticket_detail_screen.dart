@@ -13,6 +13,7 @@ import '../services/customer_service.dart';
 import '../services/machine_service.dart';
 import '../utils/my_textfield.dart';
 import '../pb.dart';
+import '../utils/pdf_helper.dart'; // Import the helper
 
 class TicketDetailScreen extends StatefulWidget {
   final Ticket ticket;
@@ -30,6 +31,48 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
 
   late String _currentStatus;
   bool _isSaving = false;
+  bool _isGeneratingPdf = false;
+
+  void _handlePdfShare() async {
+    // 1. Validation Logic
+    if (_currentStatus != 'closed') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("PDF can only be generated for CLOSED tickets.")),
+      );
+      return;
+    }
+
+    if (_workDoneController.text.trim().isEmpty || _problemController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please ensure Problem and Work Done are filled.")),
+      );
+      return;
+    }
+
+    // 2. Generation Logic
+    setState(() => _isGeneratingPdf = true);
+
+    try {
+      final customer = await _customerFuture;
+      final machine = await _machineFuture;
+
+      if (customer != null && machine != null) {
+        await PdfHelper.shareTicketPdf(
+          ticket: widget.ticket,
+          customer: customer,
+          machine: machine,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error generating PDF: $e")),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingPdf = false);
+    }
+  }
 
   late List<String> _existingPhotos;
   final List<File> _newPhotos = [];
@@ -247,6 +290,23 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       appBar: AppBar(
         title: Text("Ticket #${widget.ticket.ticketUid}", style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: colorBackground, elevation: 0, foregroundColor: colorTextDark,
+        actions: [
+          // PDF Share Button
+          if (_isGeneratingPdf)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                  width: 20, 
+                  height: 20, 
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF6B705C))),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.share_outlined),
+              onPressed: _handlePdfShare,
+              tooltip: "Share Bill",
+            ),
+        ],
       ),
       body: _isSaving 
       ? const Center(child: CircularProgressIndicator()) 
