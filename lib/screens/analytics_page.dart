@@ -80,25 +80,41 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     }
   }
 
-  Future<void> _submitBan() async {
+    Future<void> _submitBan() async {
     final email = _emailController.text.trim();
     final reason = _reasonController.text.trim();
 
     if (email.isEmpty || reason.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Enter email and reason")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Enter email and reason")),
+      );
       return;
     }
 
     setState(() => _isBanning = true);
+
     try {
       await pb.collection('banned_users').create(body: {
         'email': email,
         'reason': reason,
       });
+
+      // GUARD: Check if the widget is still in the tree after the async call
+      if (!mounted) return;
+
       _emailController.clear();
       _reasonController.clear();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("User banned successfully")),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      // GUARD: Check again here because the catch block is also after an await
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
     } finally {
       if (mounted) setState(() => _isBanning = false);
     }

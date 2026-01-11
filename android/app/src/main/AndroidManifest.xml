@@ -6,7 +6,7 @@
         </intent>
     </queries>
     <application
-        android:label="param_ticketing"
+        android:label="Param's Ticketing"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

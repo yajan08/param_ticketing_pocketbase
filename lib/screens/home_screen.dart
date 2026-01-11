@@ -173,9 +173,7 @@ void _initRealtimeSubscriptions() async {
       _isLoading = false;
       _isBackgroundSyncing = false;
     });
-    print("HOME: Data Loaded Successfully");
   } catch (e) {
-    print("HOME LOAD ERROR: $e");
     if (mounted) {
       setState(() { 
         _isLoading = false; 
