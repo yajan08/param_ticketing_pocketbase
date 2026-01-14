@@ -14,7 +14,7 @@ Future<void> initPocketBase() async {
   );
 
   pb = PocketBase(
-    'http://192.168.29.24:8090',
+    'http://192.168.0.240:8090',
     authStore: store,
   );
 }
