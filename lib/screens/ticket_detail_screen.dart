@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:param_ticketing/screens/checklist_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import '../models/ticket_model.dart';
@@ -34,45 +35,65 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
   bool _isGeneratingPdf = false;
 
   void _handlePdfShare() async {
-    // 1. Validation Logic
-    if (_currentStatus != 'closed') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("PDF can only be generated for CLOSED tickets.")),
-      );
-      return;
-    }
-
-    if (_workDoneController.text.trim().isEmpty || _problemController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please ensure Problem and Work Done are filled.")),
-      );
-      return;
-    }
-
-    // 2. Generation Logic
-    setState(() => _isGeneratingPdf = true);
-
-    try {
-      final customer = await _customerFuture;
-      final machine = await _machineFuture;
-
-      if (customer != null && machine != null) {
-        await PdfHelper.shareTicketPdf(
-          ticket: widget.ticket,
-          customer: customer,
-          machine: machine,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error generating PDF: $e")),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isGeneratingPdf = false);
-    }
+  // 2. Existing Validation Logic (Updated to use widget.ticket data from PocketBase)
+  if (widget.ticket.status != 'closed') { // Check PB status
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("PDF can only be generated for CLOSED tickets.")),
+    );
+    return;
   }
+
+  // Check PB fields instead of controllers to ensure data is saved on server first
+  if (widget.ticket.workDone.trim().isEmpty || widget.ticket.problem.trim().isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please SAVE the ticket before generating PDF.")),
+    );
+    return;
+  }
+
+  // 1. Check if we should go to Checklist (for OUT tickets)
+  if (widget.ticket.isOut) {
+    final customer = await _customerFuture;
+    final machine = await _machineFuture;
+
+    if (!mounted) return;
+    
+    // Navigate to Checklist and pass required data
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ChecklistScreen(
+          ticket: widget.ticket,
+          customer: customer!,
+          machine: machine!,
+        ),
+      ),
+    );
+    return; // Exit here so PDF logic doesn't run
+  }
+
+  // 3. Existing PDF Generation Logic
+  setState(() => _isGeneratingPdf = true);
+  try {
+    final customer = await _customerFuture;
+    final machine = await _machineFuture;
+
+    if (customer != null && machine != null) {
+      await PdfHelper.shareTicketPdf(
+        ticket: widget.ticket, // Uses the saved PocketBase model data
+        customer: customer,
+        machine: machine,
+      );
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error generating PDF: $e")),
+      );
+    }
+  } finally {
+    if (mounted) setState(() => _isGeneratingPdf = false);
+  }
+}
 
   late List<String> _existingPhotos;
   final List<File> _newPhotos = [];
@@ -288,7 +309,30 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     return Scaffold(
       backgroundColor: colorBackground,
       appBar: AppBar(
-        title: Text("Ticket #${widget.ticket.ticketUid}", style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Row(
+          children: [
+            Text("Ticket #${widget.ticket.ticketUid}", style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(width: 8),
+            if (widget.ticket.isOut)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text("OUT", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+              if (widget.ticket.isOut == false)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text("IN", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+          ],
+        ),
         backgroundColor: colorBackground, elevation: 0, foregroundColor: colorTextDark,
         actions: [
           // PDF Share Button

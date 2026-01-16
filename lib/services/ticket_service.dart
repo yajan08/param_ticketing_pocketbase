@@ -36,6 +36,7 @@ class TicketService {
     required String machineId,
     required String problem,
     required bool warranty,
+    required bool isOut,
     String note = "",
     List<File>? images, 
   }) async {
@@ -59,6 +60,7 @@ class TicketService {
         'cost': 0,
         'work_done': '',
         'note': note,
+        'is_out': isOut,
       },
       files: files, 
     );

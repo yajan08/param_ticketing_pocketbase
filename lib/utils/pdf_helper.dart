@@ -9,15 +9,18 @@ class PdfHelper {
     required Ticket ticket,
     required Customer customer,
     required Machine machine,
+    // Added optional list to hold the checklist items and remarks
+    List<Map<String, String>>? checklistData, 
   }) async {
-    // Generate the bytes
+    // 1. Generate the bytes, passing the new checklistData to the service
     final pdfBytes = await PdfService.generateTicketPdf(
       ticket: ticket,
       customer: customer,
       machine: machine,
+      checklistData: checklistData, 
     );
 
-    // Use printing package to share
+    // 2. Use printing package to share
     await Printing.sharePdf(
       bytes: pdfBytes,
       filename: 'Ticket_${ticket.ticketUid}.pdf',

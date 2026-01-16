@@ -1,6 +1,7 @@
 import 'package:pocketbase/pocketbase.dart';
 
 class Ticket {
+
   final String id;
   final int ticketUid;
   final String status;
@@ -18,6 +19,7 @@ class Ticket {
   final DateTime? doneAt;
   final DateTime? closedAt;
   final DateTime created;
+  final bool isOut;
 
   Ticket({
     required this.id,
@@ -37,6 +39,7 @@ class Ticket {
     this.closedBy,
     this.doneAt,
     this.closedAt,
+    required this.isOut,
   });
 
   factory Ticket.fromRecord(RecordModel record) {
@@ -62,6 +65,7 @@ class Ticket {
       closedBy: record.get<String>('closed_by', "").isNotEmpty ? getEmail('closed_by') : null,
       doneAt: record.get<String>('done_at', "").isNotEmpty ? DateTime.parse(record.get<String>('done_at')) : null,
       closedAt: record.get<String>('closed_at', "").isNotEmpty ? DateTime.parse(record.get<String>('closed_at')) : null,
+      isOut: record.get<bool>('is_out', false),
     );
   }
 }

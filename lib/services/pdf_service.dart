@@ -11,6 +11,7 @@ class PdfService {
     required Ticket ticket,
     required Customer customer,
     required Machine machine,
+    List<Map<String, String>>? checklistData, // Add this
   }) async {
     final pdf = pw.Document();
     final dateFormat = DateFormat('dd/MM/yyyy');
@@ -146,6 +147,31 @@ class PdfService {
                       ],
                     ],
                   ),
+
+                  // --- UPDATED CHECKLIST TABLE SECTION ---
+                  if (checklistData != null && checklistData.isNotEmpty) ...[
+                    pw.SizedBox(height: 20),
+                    pw.Text("SERVICE CHECKLIST / INSPECTION DETAILS:", 
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9, color: PdfColors.blue900)),
+                    pw.SizedBox(height: 6),
+                    pw.TableHelper.fromTextArray(
+                      headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white, fontSize: 9),
+                      headerDecoration: const pw.BoxDecoration(color: PdfColors.grey700),
+                      cellHeight: 20,
+                      cellStyle: const pw.TextStyle(fontSize: 8),
+                      columnWidths: {
+                        0: const pw.FlexColumnWidth(0.8), // Check column
+                        1: const pw.FlexColumnWidth(2),   // Item column
+                        2: const pw.FlexColumnWidth(3),   // Remark column
+                      },
+                      headers: ['Done', 'Component/Task', 'Remarks / Details'],
+                      data: checklistData.map((item) => [
+                        item['status'] == "YES" ? "[ Checked ]" : "[ X ]", // Simulated checkbox for PDF
+                        item['item'] ?? '',
+                        item['remark'] ?? '',
+                      ]).toList(),
+                    ),
+                  ],
 
                     pw.SizedBox(height: 15),
                     pw.Text("Notes:", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),

@@ -21,6 +21,7 @@ class _AddTicketScreenState extends State<AddTicketScreen> {
   Machine? _selectedMachine;
   bool _isLoading = false;
   bool _isWarranty = false;
+  bool _isOut = false;
 
   final List<File> _capturedImages = [];
   final ImagePicker _picker = ImagePicker();
@@ -137,6 +138,7 @@ class _AddTicketScreenState extends State<AddTicketScreen> {
         machineId: _selectedMachine!.id,
         problem: _problemController.text.trim(),
         warranty: _isWarranty,
+        isOut: _isOut,
         images: _capturedImages,
       );
 
@@ -313,7 +315,28 @@ class _AddTicketScreenState extends State<AddTicketScreen> {
                 activeThumbColor: colorPrimary,
                 onChanged: (val) => setState(() => _isWarranty = val),
               ),
-
+              Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text("IN"),
+                    selected: !_isOut,
+                    selectedColor: colorPrimary.withAlpha(20),
+                    onSelected: (selected) {
+                      if (selected) setState(() => _isOut = false);
+                    },
+                  ),
+                  const SizedBox(width: 20),
+                  ChoiceChip(
+                    label: const Text("OUT"),
+                    selected: _isOut,
+                    selectedColor: colorPrimary.withAlpha(20),
+                    onSelected: (selected) {
+                      if (selected) setState(() => _isOut = true);
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(width: 10),
               const SizedBox(height: 25),
               Text("PHOTOS", style: TextStyle(color: colorPrimary, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)),
               const SizedBox(height: 10),
