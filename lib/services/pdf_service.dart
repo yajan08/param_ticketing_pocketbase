@@ -139,16 +139,19 @@ class PdfService {
                       [
                         ticket.problem,
                         "$workDisplay\n\nAttended by: $staffEmail",
-                        "Rs. ${ticket.cost.toStringAsFixed(2)}"
+                        // Ternary check: If cost > 0, show formatted amount. Else, show empty string.
+                        ticket.cost > 0 
+                            ? "Rs. ${ticket.cost.toStringAsFixed(2)}" 
+                            : "",
                       ],
                     ],
                   ),
 
-                  if (ticket.note.isNotEmpty) ...[
                     pw.SizedBox(height: 15),
                     pw.Text("Notes:", style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
-                    pw.Text(ticket.note, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800)),
-                  ],
+                    if (ticket.note.isNotEmpty) ...[
+                     pw.Text(ticket.note, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey800)),
+                    ],
 
                   pw.Spacer(), // Pushes signatures to the bottom
 
