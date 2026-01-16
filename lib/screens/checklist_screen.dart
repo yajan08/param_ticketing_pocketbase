@@ -36,13 +36,12 @@ class ChecklistScreen extends StatefulWidget {
 class _ChecklistScreenState extends State<ChecklistScreen> {
   // 1. Central Configuration Arrays
   final List<String> _weightItems = [
-    'PCB', 'Earthing', 'Battery', 'Display', 'Loadcell', 
-    'Calibration', 'Cleaning', 'Keyboard', 'Mains Chord', 'Levelling'
+    'Battery', 'Display', 'Keyboard', 'Caliberation', 'Power Supply', 'Loadcell', 'Overall'
   ];
 
   final List<String> _packingItems = [
     'Small Patti', 'Big Patti', 'Coil', 'Heating', 
-    'Packing', 'Beeper', 'Regulator'
+    'Packing', 'Beeper', 'Regulator', 'General'
   ];
 
   late List<ChecklistItem> _items;

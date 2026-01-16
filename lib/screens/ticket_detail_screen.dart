@@ -50,7 +50,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     );
     return;
   }
-
+ 
   // 1. Check if we should go to Checklist (for OUT tickets)
   if (widget.ticket.isOut) {
     final customer = await _customerFuture;
