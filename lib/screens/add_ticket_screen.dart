@@ -318,7 +318,7 @@ class _AddTicketScreenState extends State<AddTicketScreen> {
               Row(
                 children: [
                   ChoiceChip(
-                    label: const Text("IN"),
+                    label: const Text("In House"),
                     selected: !_isOut,
                     selectedColor: colorPrimary.withAlpha(20),
                     onSelected: (selected) {
@@ -327,7 +327,7 @@ class _AddTicketScreenState extends State<AddTicketScreen> {
                   ),
                   const SizedBox(width: 20),
                   ChoiceChip(
-                    label: const Text("OUT"),
+                    label: const Text("On Site"),
                     selected: _isOut,
                     selectedColor: colorPrimary.withAlpha(20),
                     onSelected: (selected) {

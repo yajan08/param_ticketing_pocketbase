@@ -320,7 +320,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                   color: Colors.blue,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text("OUT", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                child: const Text("On Site", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
               ),
               if (widget.ticket.isOut == false)
               Container(
@@ -329,7 +329,7 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                   color: Colors.blue,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text("IN", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                child: const Text("In House", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
               ),
           ],
         ),

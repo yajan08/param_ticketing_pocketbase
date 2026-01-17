@@ -14,7 +14,7 @@ Future<void> initPocketBase() async {
   );
 
   pb = PocketBase(
-    'http://192.168.29.24:8090',
+    'https://pb.paramgroup.net',
     authStore: store,
   );
 }

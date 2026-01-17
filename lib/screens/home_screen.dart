@@ -24,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // Logic State
   String _searchQuery = "";
   String _selectedStatusFilter = "all";
+  String _selectedLocationFilter = "all"; // "all", "in", "out"
   DateTime? _startDate;
   DateTime? _endDate;
   bool _isLoading = true;
@@ -264,12 +265,58 @@ void _initRealtimeSubscriptions() async {
     );
   }
 
+Widget _buildLocationFilter() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    child: Row(
+      children: [
+        _buildSmallChoiceChip("All Type", "all", isLocation: true),
+        const SizedBox(width: 8),
+        _buildSmallChoiceChip("IN Only", "in", isLocation: true),
+        const SizedBox(width: 8),
+        _buildSmallChoiceChip("OUT Only", "out", isLocation: true),
+      ],
+    ),
+  );
+}
+
+// Updated buildFilterChip to support both filter types
+Widget _buildSmallChoiceChip(String label, String value, {bool isLocation = false}) {
+  bool isSelected = isLocation 
+      ? _selectedLocationFilter == value 
+      : _selectedStatusFilter == value;
+
+  return ChoiceChip(
+    visualDensity: VisualDensity.compact,
+    label: Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+    selected: isSelected,
+    selectedColor: isLocation ? colorSecondary : colorPrimary, 
+    onSelected: (v) => setState(() {
+      if (isLocation) {
+        _selectedLocationFilter = value;
+      } else {
+        _selectedStatusFilter = value;
+      }
+    }),
+    labelStyle: TextStyle(color: isSelected ? Colors.white : colorPrimary),
+    showCheckmark: false,
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     final cleanQuery = _searchQuery.toLowerCase().replaceAll(RegExp(r'\s+'), '');
 
     List<Ticket> filtered = _allTickets.where((t) {
+
+      // 1. Status Filter
       if (_selectedStatusFilter != "all" && t.status.toLowerCase() != _selectedStatusFilter) return false;
+
+      // 2. NEW: Location Filter (In/Out)
+      if (_selectedLocationFilter == "in" && t.isOut == true) return false;
+      if (_selectedLocationFilter == "out" && t.isOut == false) return false;
+
+      // 3. Date Range Filter
       if (_startDate != null && _endDate != null) {
         if (t.created.isBefore(_startDate!) || t.created.isAfter(_endDate!.add(const Duration(days: 1)))) return false;
       }
@@ -323,7 +370,7 @@ void _initRealtimeSubscriptions() async {
               ),
             ),
           ),
-          
+          _buildLocationFilter(), // <--- Add this here
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(

@@ -130,20 +130,32 @@ class PdfService {
                     headerDecoration: const pw.BoxDecoration(color: PdfColors.blue900),
                     cellHeight: 30,
                     cellStyle: const pw.TextStyle(fontSize: 10),
-                    columnWidths: {
-                      0: const pw.FlexColumnWidth(2), 
-                      1: const pw.FlexColumnWidth(3), 
-                      2: const pw.FlexColumnWidth(1.2), 
-                    },
-                    headers: ['Issue Reported', 'Work Done', 'Amount'],
+                    
+                    // Dynamically set column widths based on cost
+                    columnWidths: ticket.cost > 0 
+                      ? {
+                          0: const pw.FlexColumnWidth(2), 
+                          1: const pw.FlexColumnWidth(3), 
+                          2: const pw.FlexColumnWidth(1.2), 
+                        }
+                      : {
+                          0: const pw.FlexColumnWidth(2), 
+                          1: const pw.FlexColumnWidth(3), 
+                        },
+
+                    // Dynamically set headers
+                    headers: [
+                      'Issue Reported', 
+                      'Work Done', 
+                      if (ticket.cost > 0) 'Amount'
+                    ],
+
+                    // Dynamically set row data
                     data: [
                       [
                         ticket.problem,
                         "$workDisplay\n\nAttended by: $staffEmail",
-                        // Ternary check: If cost > 0, show formatted amount. Else, show empty string.
-                        ticket.cost > 0 
-                            ? "Rs. ${ticket.cost.toStringAsFixed(2)}" 
-                            : "",
+                        if (ticket.cost > 0) "Rs. ${ticket.cost.toStringAsFixed(2)}",
                       ],
                     ],
                   ),
@@ -168,7 +180,7 @@ class PdfService {
                       data: checklistData.map((item) => [
                         item['status'] == "YES" ? "[ Checked ]" : "[ X ]", // Simulated checkbox for PDF
                         item['item'] ?? '',
-                        item['remark'] ?? '',
+                        item['remark'] ?? 'N/A',
                       ]).toList(),
                     ),
                   ],

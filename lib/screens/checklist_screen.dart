@@ -41,7 +41,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   final List<String> _packingItems = [
     'Small Patti', 'Big Patti', 'Coil', 'Heating', 
-    'Packing', 'Beeper', 'Regulator', 'General'
+    'Packing', 'Buzzer', 'Regulator', 'General'
   ];
 
   late List<ChecklistItem> _items;
@@ -147,7 +147,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: MyTextField(
-                      hintText: "Remarks",
+                      hintText: "Remarks (if any)",
                       obscureText: false,
                       controller: item.controller,
                     ),
