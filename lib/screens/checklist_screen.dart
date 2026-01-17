@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/ticket_model.dart';
 import '../models/customer_model.dart';
 import '../models/machine_model.dart';
+import '../services/ticket_service.dart';
 import '../utils/pdf_helper.dart';
 import '../utils/my_textfield.dart';
 
@@ -46,6 +47,12 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   late List<ChecklistItem> _items;
 
+  // Track selected image name
+  String? _selectedPhotoName;
+  
+  // NEW: Track generation state for the button buffer
+  bool _isGenerating = false;
+
   final Color colorBackground = const Color(0xFFF6EAD4);
   final Color colorPrimary = const Color(0xFF6B705C);
   final Color colorTextDark = const Color(0xFF3F4238);
@@ -68,21 +75,48 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   }
 
   void _generateFinalPdf() async {
-    // 3. Prepare data for PDF Service
-    final List<Map<String, String>> selectedData = _items
-        .map((item) => {
-              "item": item.name,
-              "remark": item.controller.text.trim(),
-              "status": item.isChecked ? "YES" : "NO", // <--- ADD THIS LINE
-            })
-        .toList();
+    // Prevent double taps
+    if (_isGenerating) return;
 
-    await PdfHelper.shareTicketPdf(
-      ticket: widget.ticket,
-      customer: widget.customer,
-      machine: widget.machine,
-      checklistData: selectedData, // We will add this parameter to PdfHelper next
-    );
+    // --- MANDATORY PHOTO VALIDATION ---
+    if (_selectedPhotoName == null && widget.ticket.photos.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a photo for the PDF signature area."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isGenerating = true);
+
+    try {
+      // 3. Prepare data for PDF Service
+      final List<Map<String, String>> selectedData = _items
+          .map((item) => {
+                "item": item.name,
+                "remark": item.controller.text.trim(),
+                "status": item.isChecked ? "YES" : "NO",
+              })
+          .toList();
+
+      await PdfHelper.shareTicketPdf(
+        ticket: widget.ticket,
+        customer: widget.customer,
+        machine: widget.machine,
+        checklistData: selectedData,
+        selectedPhotoName: _selectedPhotoName, 
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isGenerating = false);
+    }
   }
 
   @override
@@ -103,60 +137,112 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
         foregroundColor: colorTextDark,
         elevation: 0,
       ),
-      body: ListView.builder(
+      body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: _items.length,
-        itemBuilder: (context, index) {
-          final item = _items[index];
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(50),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // 1. Checkbox and Label (Left Side)
-                Expanded(
-                  flex: 2, // Controls the width ratio
-                  child: CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(item.name, 
-                      style: TextStyle(
-                        color: colorTextDark, 
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      )
+        children: [
+          // --- CHECKLIST ITEMS SECTION ---
+          ..._items.map((item) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(50),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(item.name, 
+                        style: TextStyle(
+                          color: colorTextDark, 
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        )
+                      ),
+                      value: item.isChecked,
+                      activeColor: colorPrimary,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (val) {
+                        setState(() => item.isChecked = val!);
+                      },
                     ),
-                    value: item.isChecked,
-                    activeColor: colorPrimary,
-                    controlAffinity: ListTileControlAffinity.leading, // Box on the left
-                    onChanged: (val) {
-                      setState(() => item.isChecked = val!);
-                    },
                   ),
-                ),
-                
-                const SizedBox(width: 10),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    flex: 3,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: MyTextField(
+                        hintText: "Remarks (if any)",
+                        obscureText: false,
+                        controller: item.controller,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
 
-                // 2. Remarks TextField (Right Side)
-                Expanded(
-                  flex: 3, // Gives more space to the text input
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: MyTextField(
-                      hintText: "Remarks (if any)",
-                      obscureText: false,
-                      controller: item.controller,
-                    ),
-                  ),
-                ),
+          const SizedBox(height: 20),
+
+          // --- PHOTO SELECTION SECTION (Inside the scroll view) ---
+          if (widget.ticket.photos.isNotEmpty) ...[
+            const Divider(),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Text("SELECT PHOTO FOR PDF", 
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)),
+                const SizedBox(width: 5),
+                const Text("*", style: TextStyle(color: Colors.red, fontSize: 9, fontWeight: FontWeight.bold)),
               ],
             ),
-          );
-        },
+            const SizedBox(height: 15),
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: widget.ticket.photos.length,
+                itemBuilder: (context, index) {
+                  String photoName = widget.ticket.photos[index];
+                  bool isSelected = _selectedPhotoName == photoName;
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedPhotoName = isSelected ? null : photoName;
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 12),
+                      width: 100,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? colorPrimary : Colors.black12,
+                          width: isSelected ? 3 : 1,
+                        ),
+                        image: DecorationImage(
+                          image: NetworkImage(TicketService.getImageUrl('tickets', widget.ticket.id, photoName)),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      child: isSelected 
+                          ? const Center(child: Icon(Icons.check_circle, color: Colors.white, size: 35))
+                          : null,
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 30), // Extra space at bottom of scroll
+          ],
+        ],
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
@@ -171,10 +257,16 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
             minimumSize: const Size(double.infinity, 55),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          onPressed: _generateFinalPdf,
-          child: const Text("GENERATE & SHARE PDF", 
-            style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)
-          ),
+          onPressed: _isGenerating ? null : _generateFinalPdf,
+          child: _isGenerating 
+            ? const SizedBox(
+                height: 20, 
+                width: 20, 
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+              )
+            : const Text("GENERATE & SHARE PDF", 
+                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)
+              ),
         ),
       ),
     );
