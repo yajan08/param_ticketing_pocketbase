@@ -15,7 +15,7 @@ Future<void> initPocketBase() async {
   );
  
   pb = PocketBase(
-    'https://pb.paramgroup.net',
+    'https://pbserver.paramgroup.net',
     authStore: store,
   );
 
