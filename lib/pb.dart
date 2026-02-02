@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 late final PocketBase pb;
 
 Future<void> initPocketBase() async {
+
   final prefs = await SharedPreferences.getInstance();
   
   // Use AsyncAuthStore to save the token to local storage
@@ -17,4 +18,5 @@ Future<void> initPocketBase() async {
     'https://pbserver.paramgroup.net',
     authStore: store,
   );
+  
 }
