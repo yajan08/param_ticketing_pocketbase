@@ -12,7 +12,7 @@ Future<void> initPocketBase() async {
     save: (String data) async => prefs.setString('pb_auth', data),
     initial: prefs.getString('pb_auth'),
   );
-
+ 
   pb = PocketBase(
     'https://pbserver.paramgroup.net',
     authStore: store,
