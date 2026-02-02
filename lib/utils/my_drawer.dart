@@ -125,10 +125,10 @@ class MyDrawer extends StatelessWidget {
           ),
 
           const Spacer(),
-
+          
           // Logout Tile
           Padding(
-            padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 40.0),
+            padding: const EdgeInsets.only(left: 15.0, right: 15.0, bottom: 10.0),
             child: ListTile(
               tileColor: colorSecondary.withAlpha(10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -143,6 +143,19 @@ class MyDrawer extends StatelessWidget {
               ),
               leading: const Icon(Icons.logout_rounded, color: colorPrimary),
               onTap: logout,
+            ),
+          ),
+
+          // Developer Contact Info
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20.0),
+            child: Text(
+              "developer: yajanmehta@gmail.com",
+              style: TextStyle(
+                color: colorTextDark.withAlpha(150),
+                fontSize: 10,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ],
