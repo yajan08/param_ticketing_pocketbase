@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Subtitle
                 Text(
-                  "Manage your tasks efficiently",
+                  "Manage your tasks efficiently.",
                   style: TextStyle(
                     color: colorPrimary,
                     fontSize: 16,
