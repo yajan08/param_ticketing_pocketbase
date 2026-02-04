@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:param_ticketing/screens/customer_selection_screen.dart';
 import 'package:param_ticketing/screens/add_ticket_screen.dart';
 import 'pb.dart';
@@ -9,6 +10,11 @@ import 'screens/home_screen.dart';
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  // to hide the navigation buttons on older style navigation on phones.
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+  );
 
   // Initialize persistence before running the app
   await initPocketBase();
