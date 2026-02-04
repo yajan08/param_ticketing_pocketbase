@@ -81,7 +81,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   }
 
     Future<void> _submitBan() async {
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
     final reason = _reasonController.text.trim();
 
     if (email.isEmpty || reason.isEmpty) {

@@ -101,43 +101,47 @@ void _initRealtimeSubscriptions() async {
   });
 
   // 1. Listen for Bans
+  // --- Inside home_screen.dart -> _initRealtimeSubscriptions ---
   _unsubBans = await pb.collection('banned_users').subscribe('*', (e) {
     if (!mounted) return;
 
-    final currentUserEmail = pb.authStore.record?.getStringValue('email');
+    // 1. Get current logged-in user email safely and clean it
+    final currentUserEmail = pb.authStore.record?.getStringValue('email').trim().toLowerCase();
+    if (currentUserEmail == null) return;
 
-    // 2. Check if the action is a new ban ('create')
-    if (e.action == 'create' && currentUserEmail != null) {
-      final bannedEmail = e.record?.getStringValue('email');
+    // 2. Listen for BOTH 'create' and 'update'
+    if ((e.action == 'create' || e.action == 'update') && e.record != null) {
+      final bannedEmail = e.record!.getStringValue('email').trim().toLowerCase();
 
-      if (bannedEmail?.toLowerCase() == currentUserEmail.toLowerCase()) {
+      // 3. Compare cleaned strings
+      if (bannedEmail == currentUserEmail) {
         
-        // 3. Use SchedulerBinding to prevent the "Not Responding" freeze
+        // 4. Force immediate execution on the next frame
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
 
-          // Clear local session
+          // Clear local session first so they can't make more requests
           pb.authStore.clear();
 
-          // Force redirect to login and clear navigation stack
+          // Alert the user with a high-priority SnackBar or Dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("ACCOUNT RESTRICTED: You have been logged out by admin."),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 10),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+
+          // Redirect to login and wipe the back-stack
           Navigator.of(context).pushNamedAndRemoveUntil(
             '/login', 
             (route) => false
-          );
-
-          // Alert the user
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Account Restricted: You have been logged out."),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 5),
-            ),
           );
         });
       }
     }
   });
-
 }
 
   // --- DATA LOADING ---

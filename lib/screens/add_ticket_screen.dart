@@ -28,6 +28,13 @@ class _AddTicketScreenState extends State<AddTicketScreen> {
   final TextEditingController _problemController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
+  @override
+  void dispose() {
+    _problemController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
   final Color colorBackground = const Color(0xFFF6EAD4);
   final Color colorPrimary = const Color(0xFF6B705C);
   final Color colorSecondary = const Color(0xFFA2A595);
@@ -140,6 +147,7 @@ class _AddTicketScreenState extends State<AddTicketScreen> {
         warranty: _isWarranty,
         isOut: _isOut,
         images: _capturedImages,
+        note: _notesController.text.trim(),
       );
 
       if (mounted) {
